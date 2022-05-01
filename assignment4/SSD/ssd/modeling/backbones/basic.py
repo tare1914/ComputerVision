@@ -65,9 +65,9 @@ class BasicModel(torch.nn.Module):
         ),
         nn.Sequential(
             nn.ReLU(),
-            nn.Conv2d(in_channels=self.out_channels[4],out_channels=128,kernel_size=3,stride=1,padding=1),
+            nn.Conv2d(in_channels=self.out_channels[4],out_channels=128,kernel_size=2,stride=1,padding=1),
             nn.ReLU(),
-            nn.Conv2d(in_channels=128,out_channels=self.out_channels[5],kernel_size=3,stride=1,padding=0),
+            nn.Conv2d(in_channels=128,out_channels=self.out_channels[5],kernel_size=2,stride=2,padding=0),
             nn.ReLU(),
         )
         ])
@@ -97,6 +97,8 @@ class BasicModel(torch.nn.Module):
             out_channel = self.out_channels[idx]
             h, w = self.output_feature_shape[idx]
             expected_shape = (out_channel, h, w)
+            print(expected_shape)
+            print(feature.shape[1:])
             assert feature.shape[1:] == expected_shape, \
                 f"Expected shape: {expected_shape}, got: {feature.shape[1:]} at output IDX: {idx}"
         assert len(out_features) == len(self.output_feature_shape),\
