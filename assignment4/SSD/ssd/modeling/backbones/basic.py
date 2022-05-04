@@ -97,8 +97,6 @@ class BasicModel(torch.nn.Module):
             out_channel = self.out_channels[idx]
             h, w = self.output_feature_shape[idx]
             expected_shape = (out_channel, h, w)
-            print(expected_shape)
-            print(feature.shape[1:])
             assert feature.shape[1:] == expected_shape, \
                 f"Expected shape: {expected_shape}, got: {feature.shape[1:]} at output IDX: {idx}"
         assert len(out_features) == len(self.output_feature_shape),\
