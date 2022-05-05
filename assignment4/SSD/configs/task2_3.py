@@ -1,6 +1,7 @@
 from tops.config import LazyCall as L
 import torchvision
 import torchvision.models as models
+from ssd.modeling.backbones import fpn
 
 # The line belows inherits the configuration set for the tdt4265 dataset
 from .base import (
@@ -18,8 +19,8 @@ from .base import (
     label_map
 )
 
-backbone = L(FPN)(
-    output_channels=[512, 1024, 512, 512, 256, 256],
+backbone = L(fpn.FPN)(
+    output_channels=[512, 512, 512, 512, 256, 256],
     image_channels="${train.image_channels}",
     output_feature_sizes="${anchors.feature_sizes}"
 )
@@ -28,5 +29,5 @@ backbone = L(FPN)(
 #     feature_extractor="${backbone}",
 #     anchors="${anchors}",
 #     loss_objective="${loss_objective}",
-#     num_classes=10 + 1  # Add 1 for background
+#     num_classes=8 + 1  # Add 1 for background
 # )
