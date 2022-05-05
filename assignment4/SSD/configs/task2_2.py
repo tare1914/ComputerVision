@@ -3,7 +3,7 @@ import torchvision
 from ssd.data.transforms import (
     ToTensor, Normalize, Resize,
     GroundTruthBoxesToAnchors, RandomSampleCrop,
-    RandomHorizontalFlip)
+    RandomHorizontalFlip, RandomBrightness, RandomContrast)
 # The line belows inherits the configuration set for the tdt4265 dataset
 from .base import (
     train,
@@ -23,7 +23,8 @@ from .base import (
 train_cpu_transform = L(torchvision.transforms.Compose)(transforms=[
     L(RandomSampleCrop)(),
     L(ToTensor)(),
-    L(torchvision.transforms.RandomVerticalFlip)(),
+#     L(RandomBrightness)(),
+#     L(RandomContrast)(),
     L(RandomHorizontalFlip)(),
     L(Resize)(imshape="${train.imshape}"),
     L(GroundTruthBoxesToAnchors)(anchors="${anchors}", iou_threshold=0.5),

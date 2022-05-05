@@ -1,6 +1,5 @@
 from ssd.modeling import AnchorBoxes
 from tops.config import LazyCall as L
-import torchvision
 from ssd.data import TDT4265Dataset
 import torch
 import torchvision
@@ -27,7 +26,7 @@ train = dict(
     _output_dir=get_output_dir(),
     imshape=(128, 1024),
     image_channels=3,
-    mnum_classes = 8 + 1  # Add 1 for background class
+    num_classes = 8 + 1  # Add 1 for background class
 )
 
 anchors = L(AnchorBoxes)(
@@ -56,7 +55,7 @@ model = L(SSD300)(
     feature_extractor="${backbone}",
     anchors="${anchors}",
     loss_objective="${loss_objective}",
-    num_classes=10 + 1  # Add 1 for background
+    num_classes="${train.num_classes}"
 )
 
 train_cpu_transform = L(torchvision.transforms.Compose)(transforms=[
