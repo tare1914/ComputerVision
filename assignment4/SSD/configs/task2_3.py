@@ -20,7 +20,7 @@ from .base import (
 )
 
 backbone = L(fpn.FPN)(
-    output_channels=[512, 512, 512, 512, 256, 256],
+    output_channels=[64, 128, 256, 512, 256, 256],
     image_channels="${train.image_channels}",
     output_feature_sizes="${anchors.feature_sizes}"
 )

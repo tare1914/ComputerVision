@@ -23,25 +23,19 @@ class FPN(torch.nn.Module):
 #         self.backbone = torchvision.models.resnet101(pretrained=True)
 #         self.backbone = torchvision.models.resnet152(pretrained=True)
 
+        print(self.out_channels)
         self.backbone.layer5 = torch.nn.Sequential(
             nn.ReLU(),
-            nn.Conv2d(in_channels=self.out_channels[3],out_channels=256,kernel_size=3,stride=1,padding=1),
+            nn.Conv2d(in_channels=output_channels[3],out_channels=256,kernel_size=3,stride=1,padding=1),
             nn.ReLU(),
-            nn.Conv2d(in_channels=256,out_channels=self.out_channels[4],kernel_size=3,stride=2,padding=1),
+            nn.Conv2d(in_channels=256,out_channels=self.out_channels[4],kernel_size=3,stride=1,padding=1),
             nn.ReLU(),
         )
         self.backbone.layer6 = torch.nn.Sequential(
             nn.ReLU(),
             nn.Conv2d(in_channels=self.out_channels[4],out_channels=128,kernel_size=1,stride=1,padding=1),
             nn.ReLU(),
-            nn.Conv2d(in_channels=128,out_channels=self.out_channels[5],kernel_size=2,stride=2,padding=0),
-            nn.ReLU(),
-        )
-        self.backbone.layer7 = torch.nn.Sequential(
-            nn.ReLU(),
-            nn.Conv2d(in_channels=self.out_channels[5],out_channels=256,kernel_size=1,stride=1,padding=1),
-            nn.ReLU(),
-            nn.Conv2d(in_channels=256,out_channels=512,kernel_size=2,stride=2,padding=0),
+            nn.Conv2d(in_channels=128,out_channels=self.out_channels[5],kernel_size=1,stride=2,padding=0),
             nn.ReLU(),
         )
 
@@ -50,9 +44,9 @@ class FPN(torch.nn.Module):
             out_channels = image_channels
         )
 
-    def forward(self, x):
+    def forward(self, x1):
 
-        x = self.backbone.conv1(x)
+        x = self.backbone.conv1(x1)
         x = self.backbone.bn1(x)
         x = self.backbone.relu(x)
         x = self.backbone.maxpool(x)
@@ -62,12 +56,11 @@ class FPN(torch.nn.Module):
         layer4 = self.backbone.layer4(layer3)
         layer5 = self.backbone.layer5(layer4)
         layer6 = self.backbone.layer6(layer5)
-        layer7 = self.backbone.layer7(layer6)
         
         print(self.backbone)
 
-        featureDict = dict([("x0",x),("x1",layer2),("x2",layer3),("x3",layer4),("x4",layer5),("x5",layer6),("x6",layer7)])
+        #featureDict = dict([("x0",x12),("x1",layer2),("x2",layer3),("x3",layer4),("x4",layer5),("x5",layer6)])
 
-        out_fpn = self.fpn.forward(featureDict)
+        outprrrt = [x, layer2, layer3, layer4, layer5, layer6]
 
-        return tuple(out_fpn.values())
+        return outprrrt
