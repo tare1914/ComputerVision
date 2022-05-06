@@ -118,7 +118,4 @@ schedulers = dict(
 )
 
 
-label_map = {
-    0: "background",
-    **{i + 1: str(i) for i in range(10)}
-}
+label_map = {idx: cls_name for idx, cls_name in enumerate(TDT4265Dataset.class_names)}

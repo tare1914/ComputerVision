@@ -2,6 +2,8 @@ import torch
 import torch.nn as nn
 from .anchor_encoder import AnchorEncoder
 from torchvision.ops import batched_nms
+from math import log
+import numpy as np
 
 
 class SSD300(nn.Module):
@@ -9,18 +11,20 @@ class SSD300(nn.Module):
             feature_extractor: nn.Module,
             anchors,
             loss_objective,
-            num_classes: int):
+            num_classes: int,
+            use_better_weights = False):
         super().__init__()
         """
             Implements the SSD network.
             Backbone outputs a list of features, which are gressed to SSD output with regression/classification heads.
         """
-
+        self.use_better_weights = use_better_weights
         self.feature_extractor = feature_extractor
         self.loss_func = loss_objective
         self.num_classes = num_classes
         self.regression_heads = []
         self.classification_heads = []
+        self.num_boxes = anchors.num_boxes_per_fmap
 
         # Initialize output heads that are applied to each feature map from the backbone.
         for n_boxes, out_ch in zip(anchors.num_boxes_per_fmap, self.feature_extractor.out_channels):
@@ -37,6 +41,13 @@ class SSD300(nn.Module):
         for layer in layers:
             for param in layer.parameters():
                 if param.dim() > 1: nn.init.xavier_uniform_(param)
+        if self.use_better_weights:
+            p = 0.99
+            print(layers[-1].bias[-1])
+            layers[-1].bias.data = torch.tensor([np.log(p * (self.num_classes-1)/(1-p)),0,0,0,0,0,0,0,0]).flatten()
+            #bias = np.log10(p * (self.num_classes-1)/(1-p))
+            
+   
 
     def regress_boxes(self, features):
         locations = []
