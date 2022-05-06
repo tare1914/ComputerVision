@@ -6,7 +6,7 @@ from math import log
 import numpy as np
 
 
-class SSD300(nn.Module):
+class SSD_ChangedHead(nn.Module):
     def __init__(self, 
             feature_extractor: nn.Module,
             anchors,
