@@ -17,10 +17,3 @@ from .task2_3_1 import (
 )
 
 loss_objective = L(FocalLoss)(anchors="${anchors}")
-
-model = L(SSD300)(
-    feature_extractor="${backbone}",
-    anchors="${anchors}",
-    loss_objective="${loss_objective}",
-    num_classes="${train.num_classes}"
-)

@@ -24,10 +24,3 @@ backbone = L(fpn.FPN)(
     image_channels="${train.image_channels}",
     output_feature_sizes="${anchors.feature_sizes}"
 )
-
-# model = L()(
-#     feature_extractor="${backbone}",
-#     anchors="${anchors}",
-#     loss_objective="${loss_objective}",
-#     num_classes=8 + 1  # Add 1 for background
-# )
