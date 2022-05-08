@@ -46,7 +46,7 @@ anchors = L(AnchorBoxes)(
 )
 
 backbone = L(backbones.BasicModel)(
-    output_channels=[512, 1024, 512, 512, 256, 256],
+    output_channels=[128, 256, 128, 128, 64, 64],
     image_channels="${train.image_channels}",
     output_feature_sizes="${anchors.feature_sizes}"
 )
@@ -100,12 +100,6 @@ data_val = dict(
     gpu_transform=L(torchvision.transforms.Compose)(transforms=[
         L(Normalize)(mean=[0.4765, 0.4774, 0.2259], std=[0.2951, 0.2864, 0.2878])
     ])
-)
-
-backbone = L(backbones.BasicModel)(
-    output_channels=[128, 256, 128, 128, 64, 64],
-    image_channels="${train.image_channels}",
-    output_feature_sizes="${anchors.feature_sizes}"
 )
 
 optimizer = L(torch.optim.SGD)(

@@ -32,7 +32,9 @@ def evaluation(cfg, N_images: int):
     total_time = time.time() - start_time
     print("Runtime for image shape:", imshape)
     print("Total runtime:", total_time)
+    print("Number of images:", N_images)
     print("FPS:", N_images / total_time)
+    print("Inference speed:", total_time/N_images)
 
 @click.command()
 @click.argument("config_path", type=click.Path(exists=True, dir_okay=False, path_type=Path))

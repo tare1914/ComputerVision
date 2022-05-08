@@ -1,7 +1,7 @@
 from ssd.modeling import FocalLoss
 from tops.config import LazyCall as L
-from ssd.modeling import SSD300
-from .task2_3_2 import (
+from ssd.modeling import SSD_ChangedHead
+from .task2_3_3 import (
     train,
     backbone,
     anchors,
@@ -16,7 +16,7 @@ from .task2_3_2 import (
     label_map
 )
 
-model = L(SSD300)(
+model = L(SSD_ChangedHead)(
     feature_extractor="${backbone}",
     anchors="${anchors}",
     loss_objective="${loss_objective}",

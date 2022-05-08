@@ -1,29 +1,34 @@
 import torch
 import torch.nn as nn
 from .anchor_encoder import AnchorEncoder
-from .ssd import filter_predictions
+from torchvision.ops import batched_nms
+from math import log
+import numpy as np
+
 
 class SSD_ChangedHead(nn.Module):
     def __init__(self, 
             feature_extractor: nn.Module,
             anchors,
             loss_objective,
-            num_classes: int):
+            num_classes: int,
+            use_better_weights = False):
         super().__init__()
         """
             Implements the SSD network.
             Backbone outputs a list of features, which are gressed to SSD output with regression/classification heads.
         """
-
+        self.use_better_weights = use_better_weights
         self.feature_extractor = feature_extractor
         self.loss_func = loss_objective
         self.num_classes = num_classes
         self.regression_heads = []
         self.classification_heads = []
+        self.num_boxes = anchors.num_boxes_per_fmap
 
         # Initialize output heads that are applied to each feature map from the backbone.
         for n_boxes, out_ch in zip(anchors.num_boxes_per_fmap, self.feature_extractor.out_channels):
-            self.classification_heads.append(nn.Sequential(
+            new_head_r = nn.Sequential(
                 nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1),
                 nn.ReLU(),
                 nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1),
@@ -32,12 +37,10 @@ class SSD_ChangedHead(nn.Module):
                 nn.ReLU(),
                 nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1),
                 nn.ReLU(),
-                nn.Conv2d(out_ch, n_boxes * self.num_classes, kernel_size=3, padding=1),
+                nn.Conv2d(out_ch, n_boxes * 4, kernel_size=3, padding=1)
                 )
-            )
 
-
-            self.regression_heads.append(nn.Sequential(
+            new_head_c = nn.Sequential(
                 nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1),
                 nn.ReLU(),
                 nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1),
@@ -46,22 +49,28 @@ class SSD_ChangedHead(nn.Module):
                 nn.ReLU(),
                 nn.Conv2d(out_ch, out_ch, kernel_size=3, padding=1),
                 nn.ReLU(),
-                nn.Conv2d(out_ch, n_boxes * 4, kernel_size=3, padding=1),
+                nn.Conv2d(out_ch, n_boxes * self.num_classes, kernel_size=3, padding=1)
                 )
-            )
-        
+            
+            self.regression_heads.append(new_head_r)
+            self.classification_heads.append(new_head_c)
 
         self.regression_heads = nn.ModuleList(self.regression_heads)
         self.classification_heads = nn.ModuleList(self.classification_heads)
         self.anchor_encoder = AnchorEncoder(anchors)
         self._init_weights()
 
-
     def _init_weights(self):
         layers = [*self.regression_heads, *self.classification_heads]
         for layer in layers:
             for param in layer.parameters():
                 if param.dim() > 1: nn.init.xavier_uniform_(param)
+        if self.use_better_weights:
+            p = 0.99
+#             layers[-1][0].bias.data[-18:-9] = torch.tensor([np.log(p * (self.num_classes-1)/(1-p)),0,0,0,0,0,0,0,0]).flatten()
+#             layers[-1][-1].bias.data[-18:-9] = torch.tensor([np.log(p * (self.num_classes-1)/(1-p)),0,0,0,0,0,0,0,0]).flatten()
+            self.classification_heads[-1][-1].bias.data[:9] = torch.tensor([np.log(p * (self.num_classes-1)/(1-p)),0,0,0,0,0,0,0,0]).flatten()
+            self.regression_heads[-1][-1].bias.data[:9] = torch.tensor([np.log(p * (self.num_classes-1)/(1-p)),0,0,0,0,0,0,0,0]).flatten()
 
     def regress_boxes(self, features):
         locations = []
@@ -107,3 +116,29 @@ class SSD_ChangedHead(nn.Module):
                 boxes[:, [1, 3]] *= W
             predictions.append((boxes, categories, scores))
         return predictions
+
+ 
+def filter_predictions(
+        boxes_ltrb: torch.Tensor, confs: torch.Tensor,
+        nms_iou_threshold: float, max_output: int, score_threshold: float):
+        """
+            boxes_ltrb: shape [N, 4]
+            confs: shape [N, num_classes]
+        """
+        assert 0 <= nms_iou_threshold <= 1
+        assert max_output > 0
+        assert 0 <= score_threshold <= 1
+        scores, category = confs.max(dim=1)
+
+        # 1. Remove low confidence boxes / background boxes
+        mask = (scores > score_threshold).logical_and(category != 0)
+        boxes_ltrb = boxes_ltrb[mask]
+        scores = scores[mask]
+        category = category[mask]
+
+        # 2. Perform non-maximum-suppression
+        keep_idx = batched_nms(boxes_ltrb, scores, category, iou_threshold=nms_iou_threshold)
+
+        # 3. Only keep max_output best boxes (NMS returns indices in sorted order, decreasing w.r.t. scores)
+        keep_idx = keep_idx[:max_output]
+        return boxes_ltrb[keep_idx], category[keep_idx], scores[keep_idx]

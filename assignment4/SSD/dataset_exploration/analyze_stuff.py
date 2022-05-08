@@ -1,7 +1,8 @@
 from tops.config import instantiate, LazyConfig
 from ssd import utils
 from tqdm import tqdm
-
+from matplotlib import pyplot as plt
+import numpy as np
 
 def get_config(config_path):
     cfg = LazyConfig.load(config_path)
@@ -22,10 +23,35 @@ def get_dataloader(cfg, dataset_to_visualize):
 
 
 def analyze_something(dataloader, cfg):
+    box_width = [[-5]] *9
+    box_height = [[-5]] *9
+    box_ratio = [[-5]] *9
+                      
     for batch in tqdm(dataloader):
-        # Remove the two lines below and start analyzing :D
-        print("The keys in the batch are:", batch.keys())
-        exit()
+        labels = (batch['labels'][0])
+        for ind, box in enumerate(batch['boxes'][0]):
+            
+            width = (box[2] - box[0]).numpy()*batch['width'].numpy()[0] #account for 0-1
+            height = (box[3] - box[1]).numpy()*batch['height'].numpy()[0]
+            ratio = width/height
+            
+            box_width[labels[ind].item()] = np.append(box_width[labels[ind].item()], width)
+            box_height[labels[ind].item()] = np.append(box_height[labels[ind].item()], height)
+            box_ratio[labels[ind].item()] = np.append(box_ratio[labels[ind].item()], ratio)
+
+    #Make graphs for each class
+    for i in range(1, len(cfg.label_map)):
+        plt.plot(box_width[labels[i].item()])
+        plt.plot(box_height[labels[i].item()])
+        plt.plot(box_ratio[labels[i].item()])
+        
+        plt.xlabel("number")
+        plt.ylabel("size")
+        
+        plt.savefig('./dataset_exploration/anal_figures/{0}'.format(cfg.label_map[i]))
+        plt.close()
+            
+        
 
 
 def main():
