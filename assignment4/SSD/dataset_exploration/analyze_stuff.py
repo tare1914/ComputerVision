@@ -40,16 +40,16 @@ def analyze_something(dataloader, cfg):
             box_ratio[labels[ind].item()] = np.append(box_ratio[labels[ind].item()], ratio)
 
     #Make graphs for each class
-    for i in range(1, len(cfg.label_map)):
-        plt.plot(box_width[labels[i].item()])
-        plt.plot(box_height[labels[i].item()])
-        plt.plot(box_ratio[labels[i].item()])
+#     for i in range(1, len(cfg.label_map)):
+    plt.plot(box_width[labels[2].item()])
+    plt.plot(box_height[labels[2].item()])
+    plt.plot(box_ratio[labels[2].item()])
         
-        plt.xlabel("number")
-        plt.ylabel("size")
+    plt.xlabel("number")
+    plt.ylabel("size")
         
-        plt.savefig('./dataset_exploration/anal_figures/{0}'.format(cfg.label_map[i]))
-        plt.close()
+    plt.savefig('./dataset_exploration/anal_figures/{0}'.format(cfg.label_map[3]))
+    plt.close()
             
         
 
